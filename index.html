@@ -1,1 +1,286 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رحلة الفارس اللغوي</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
 
+    <!-- ==================== شاشة التحميل ==================== -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-box">
+            <div class="spinner"></div>
+            <p class="loading-text">جارٍ تحميل رحلة الفارس...</p>
+        </div>
+    </div>
+
+    <!-- ==================== الهيدر ==================== -->
+    <header class="app-header">
+        <div class="container header-inner">
+            <div class="brand">
+                <div class="brand-icon"><i class="fa-solid fa-scroll"></i></div>
+                <div class="brand-text">
+                    <h1 class="brand-title">رحلة الفارس اللغوي</h1>
+                    <p class="brand-sub">لطلاب الجامعات</p>
+                </div>
+            </div>
+            <div class="hud">
+                <div class="hud-item hud-xp">
+                    <i class="fa-solid fa-star"></i>
+                    <span id="topXp">0</span>
+                    <small>XP</small>
+                </div>
+                <div class="hud-item hud-gold">
+                    <i class="fa-solid fa-coins"></i>
+                    <span id="topGold">0</span>
+                </div>
+                <div class="hud-item hud-name">
+                    <i class="fa-solid fa-user"></i>
+                    <span id="topName">فارس</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== المحتوى ==================== -->
+    <main class="app-main">
+
+        <!-- ---------- شاشة البداية ---------- -->
+        <section id="screenStart" class="screen active">
+            <div class="start-wrap">
+                <div class="start-icon"><i class="fa-solid fa-scroll"></i></div>
+                <h1 class="start-title font-amiri">رحلة الفارس اللغوي</h1>
+                <p class="start-desc">أدخل اسمك لبدء المغامرة في مملكة الأخطاء الشائعة</p>
+                <input type="text" id="playerNameInput" maxlength="20" placeholder="اكتب اسمك هنا" class="input-name" autocomplete="off">
+                <button id="startGameBtn" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-play"></i> ابدأ اللعبة
+                </button>
+                <button id="infoBtn" class="btn btn-ghost btn-block">
+                    <i class="fa-solid fa-circle-info"></i> معلومات عن اللعبة
+                </button>
+            </div>
+        </section>
+
+        <!-- ---------- نافذة المعلومات ---------- -->
+        <div id="infoModal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📜 معلومات عن اللعبة</h2>
+                    <button id="closeInfoModal" class="icon-btn" aria-label="إغلاق">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="info-block">
+                        <h3>🎯 الهدف من اللعبة</h3>
+                        <p>تعلّم قواعد اللغة العربية وتصحيح أخطائها الشائعة بطريقة ممتعة وتفاعلية.</p>
+                    </div>
+                    <div class="info-block">
+                        <h3>👥 الفئة المستهدفة</h3>
+                        <p>طلاب الجامعات والمهتمون بتقوية لغتهم العربية.</p>
+                    </div>
+                    <div class="info-block">
+                        <h3>📚 المحتوى الحالي</h3>
+                        <ul>
+                            <li><strong>مملكة الأخطاء الشائعة</strong> — تصحيح الأخطاء اللغوية.</li>
+                        </ul>
+                        <p class="info-note">ممالك أخرى ستُضاف لاحقًا بإذن الله.</p>
+                    </div>
+                    <div class="info-block">
+                        <h3>🏆 الفوائد</h3>
+                        <ul>
+                            <li>تصحيح الأخطاء اللغوية الشائعة.</li>
+                            <li>تتبع التقدم والإنجازات.</li>
+                            <li>اختبارات شاملة للتقييم.</li>
+                        </ul>
+                    </div>
+                    <div class="info-block">
+                        <h3>📜 الرخصة</h3>
+                        <p>جميع الحقوق محفوظة © د. عمر الرواجفة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ---------- شاشة الخريطة ---------- -->
+        <section id="screenMap" class="screen">
+            <div class="container">
+                <div class="map-header">
+                    <h2 class="map-title font-amiri">🗺️ ممالك اللغة العربية</h2>
+                    <p class="map-sub">اختر مملكة لبدء المغامرة أو متابعة التقدم</p>
+                </div>
+                <div class="kingdom-grid" id="kingdomGrid"></div>
+                <div class="map-actions">
+                    <button id="libraryBtn" class="btn btn-ghost">
+                        <i class="fa-solid fa-book-open"></i> مكتبة القواعد
+                    </button>
+                    <button id="examModeBtn" class="btn btn-ghost">
+                        <i class="fa-solid fa-file-pen"></i> وضع الاختبار
+                    </button>
+                    <button id="achievementsBtn" class="btn btn-ghost">
+                        <i class="fa-solid fa-trophy"></i> الإنجازات
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ---------- شاشة المرحلة ---------- -->
+        <section id="screenLevel" class="screen">
+            <div class="container level-wrap">
+                <div class="level-header">
+                    <button id="backToMapBtn" class="btn-link">
+                        <i class="fa-solid fa-arrow-right"></i> رجوع
+                    </button>
+                    <div class="level-title-wrap">
+                        <h3 id="levelTitle"></h3>
+                        <p id="levelSubtitle"></p>
+                    </div>
+                    <div class="spacer"></div>
+                </div>
+
+                <div class="level-progress-row">
+                    <span class="progress-label">
+                        السؤال <span id="currentQuestionNum">1</span> / <span id="totalQuestionsNum">5</span>
+                    </span>
+                    <div class="progress-bar">
+                        <div id="levelProgress" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div class="time-bar-container">
+                    <div id="timeBarFill" class="time-bar-fill"></div>
+                </div>
+
+                <div class="question-card">
+                    <div class="question-meta">
+                        <span id="questionType" class="question-type"></span>
+                        <span class="question-time"><span id="timerSeconds">15</span> ثانية</span>
+                    </div>
+                    <h4 id="questionText" class="question-text font-amiri"></h4>
+                    <div id="optionsContainer" class="options-list"></div>
+                    <div class="hint-wrap">
+                        <button id="hintBtn" class="btn-link hint-btn">
+                            <i class="fa-solid fa-lightbulb"></i> استخدم تلميحًا (10 قطع ذهبية)
+                        </button>
+                        <p id="hintText" class="hint-text hidden"></p>
+                    </div>
+                </div>
+
+                <div class="level-actions">
+                    <button id="endLevelBtn" class="btn btn-danger hidden">
+                        <i class="fa-solid fa-stop"></i> إنهاء اللعب
+                    </button>
+                    <button id="nextBtn" class="btn btn-primary hidden">السؤال التالي</button>
+                    <button id="finishLevelBtn" class="btn btn-primary hidden">إنهاء المرحلة</button>
+                </div>
+
+                <div id="feedbackBox" class="feedback hidden"></div>
+            </div>
+        </section>
+
+        <!-- ---------- شاشة نهاية المرحلة ---------- -->
+        <section id="screenLevelComplete" class="screen">
+            <div class="container complete-wrap">
+                <div class="complete-icon" id="completeIcon">🎉</div>
+                <h2 id="completeTitle" class="complete-title">أحسنت!</h2>
+                <p id="completeMessage" class="complete-msg"></p>
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-value stat-correct" id="completeCorrect">0</div>
+                        <div class="stat-label">إجابات صحيحة</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value stat-xp" id="completeXp">0</div>
+                        <div class="stat-label">نقاط خبرة</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value stat-gold" id="completeGold">0</div>
+                        <div class="stat-label">قطع ذهبية</div>
+                    </div>
+                </div>
+                <button id="continueFromCompleteBtn" class="btn btn-primary btn-block">
+                    متابعة الرحلة
+                </button>
+            </div>
+        </section>
+
+        <!-- ---------- شاشة المكتبة ---------- -->
+        <section id="screenLibrary" class="screen">
+            <div class="container">
+                <div class="page-header">
+                    <h2>📚 مكتبة القواعد</h2>
+                    <button id="libBackBtn" class="btn-link">
+                        <i class="fa-solid fa-arrow-right"></i> رجوع
+                    </button>
+                </div>
+                <div id="libraryContent" class="library-list"></div>
+            </div>
+        </section>
+
+        <!-- ---------- شاشة الإنجازات ---------- -->
+        <section id="screenAchievements" class="screen">
+            <div class="container">
+                <div class="page-header">
+                    <h2>🏆 الإنجازات</h2>
+                    <button id="achBackBtn" class="btn-link">
+                        <i class="fa-solid fa-arrow-right"></i> رجوع
+                    </button>
+                </div>
+                <div id="achievementsList" class="achievements-grid"></div>
+            </div>
+        </section>
+
+        <!-- ---------- شاشة الاختبار ---------- -->
+        <section id="screenExam" class="screen">
+            <div class="container exam-wrap">
+                <div class="exam-header">
+                    <h2>📝 وضع الاختبار</h2>
+                    <p id="examSubtitle">اختبار شامل بدون تلميحات</p>
+                </div>
+                <div id="examContent"></div>
+                <div class="exam-actions">
+                    <button id="examStartBtn" class="btn btn-primary">بدء الاختبار</button>
+                    <button id="examBackBtn" class="btn btn-ghost">رجوع للخريطة</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ---------- شاشة نتيجة الاختبار ---------- -->
+        <section id="screenExamResult" class="screen">
+            <div class="container complete-wrap">
+                <div class="complete-icon">📊</div>
+                <h2 class="complete-title">نتيجة الاختبار</h2>
+                <div id="examScoreDisplay" class="exam-score">0%</div>
+                <p id="examMessage" class="complete-msg"></p>
+                <div class="stats-grid stats-grid-2">
+                    <div class="stat">
+                        <div class="stat-value stat-correct" id="examCorrect">0</div>
+                        <div class="stat-label">صحيحة</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value stat-wrong" id="examWrong">0</div>
+                        <div class="stat-label">خاطئة</div>
+                    </div>
+                </div>
+                <button id="examResultBackBtn" class="btn btn-primary btn-block">
+                    عودة للخريطة
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== الفوتر ==================== -->
+    <footer class="app-footer">
+        <p>جميع الحقوق محفوظة © <span id="year"></span> د. عمر الرواجفة</p>
+    </footer>
+
+    <script src="js/game.js"></script>
+</body>
+</html>
