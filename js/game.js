@@ -1,4 +1,3 @@
-
 /* =========================================================
    رحلة الفارس اللغوي — منطق اللعبة
    ========================================================= */
@@ -7,6 +6,20 @@
    لإضافة قسم جديد لاحقًا: أضف عنصرًا هنا مع ملف JSON الخاص به.
    ========================================================= */
 const SECTIONS = [
+    {
+        id: 'imlaa',
+        name: 'مملكة الإملاء',
+        icon: 'fa-solid fa-pen-to-square',
+        description: 'الهمزات، التاء، علامات الترقيم',
+        file: 'questions/spelling.json'
+    },
+    {
+        id: 'numbers',
+        name: 'مملكة الأعداد',
+        icon: 'fa-solid fa-hashtag',
+        description: 'الأعداد والمعدود وقواعدها',
+        file: 'questions/numbers.json'
+    },
     {
         id: 'akhtaa',
         name: 'مملكة الأخطاء الشائعة',
@@ -142,7 +155,7 @@ const LIBRARY_CONTENT = [
     { title: 'كافّة وغير', content: 'كافة لا تُضاف إلى ما بعدها بل تعرب حالًا: "حضر الناسُ كافّةً". وغير لا تدخلها (أل): "غيرُ المقبولِ" لا "الغيرُ المقبولِ".' },
     { title: 'مبارك ومبروك', content: 'الصواب في التهنئة "مبارك" من الفعل بارك، وليس "مبروك" من بَرَكَ البعير.' },
     { title: 'حروف الجر وتغيير المعنى', content: 'رغِبَ في الشيء: أراده، ورغِبَ عنه: تركه. فأجاب عن السؤال (لا: على). واعتذر عن الفعل لا عن الحضور.' },
-    { title: 'بِمعنى المؤنث والمذكر', content: 'نقول "بئر" مؤنثة، و"سبيل" يذكر ويؤنث. وقول "بِطِّيخ" بكسر الباء هو الفصيح لا بفتحها.' }
+    { title: 'قواعد الأعداد', content: 'العدد 1 و2 يوافق المعدود، والأعداد 3-10 تخالفه، و11-19 الجزء الأول يخالف والثاني يوافق، وألفاظ العقود والمائة والألف تلزم صورة واحدة.' }
 ];
 
 /* ==================== أدوات مساعدة ==================== */
@@ -680,7 +693,6 @@ function renderExamQuestion() {
     clearInterval(examTimerInterval);
     examTimeLeft = TIMER_DURATION;
     const startTime = Date.now();
-    const fill = $('examTimeBarFill');
 
     examTimerInterval = setInterval(() => {
         const elapsed = (Date.now() - startTime) / 1000;
@@ -755,7 +767,6 @@ function finishExam() {
 
 /* ==================== التهيئة ==================== */
 async function init() {
-    // ربط الأحداث الأساسية أولًا (حتى لو تأخر تحميل الأسئلة)
     $('startGameBtn').addEventListener('click', handleStartGame);
     $('playerNameInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleStartGame();
@@ -801,7 +812,6 @@ async function init() {
 
     $('hintBtn').addEventListener('click', useHint);
 
-    // تحميل الحالة والبيانات
     loadState();
     updateTopBar();
     $('playerNameInput').value = gameState.playerName || '';
