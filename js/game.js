@@ -32,7 +32,7 @@ const SECTIONS = [
 /* ==================== ثوابت اللعبة ==================== */
 const QUESTIONS_PER_LEVEL = 5;
 const EXAM_MAX_QUESTIONS = 20;
-const TIMER_DURATION = 15;
+const TIMER_DURATION = 30;
 const HINT_COST = 10;
 const XP_PER_CORRECT = 20;
 const GOLD_PER_CORRECT = 5;
