@@ -1,0 +1,14 @@
+arabic-language-game/
+│
+├── index.html
+│
+├── css/
+│   └── style.css
+│
+├── js/
+│   └── game.js
+│
+└── questions/
+    ├── common-errors.json
+    ├── spelling.json
+    └── numbers.json
