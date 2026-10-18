@@ -162,7 +162,35 @@ ul {
 .brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+/* زر الهوم الصغير */
+.header-home-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: var(--gold-soft);
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    transition: var(--transition);
+    flex-shrink: 0;
+    border: 1px solid transparent;
+}
+
+.header-home-btn:hover {
+    background: var(--gold);
+    color: #ffffff;
+    border-color: var(--gold-dark);
+}
+
+.header-home-btn:active {
+    transform: scale(0.94);
 }
 
 .brand-icon {
@@ -178,11 +206,18 @@ ul {
     flex-shrink: 0;
 }
 
+.brand-text {
+    min-width: 0;
+}
+
 .brand-title {
     font-size: 1.05rem;
     font-weight: 900;
     color: var(--text);
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .brand-sub {
@@ -190,12 +225,15 @@ ul {
     color: var(--text-3);
 }
 
+/* HUD — مقاومة للأرقام الكبيرة */
 .hud {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
     font-size: 0.92rem;
     font-weight: 700;
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 .hud-item {
@@ -206,12 +244,40 @@ ul {
     border-radius: 999px;
     background: var(--surface);
     border: 1px solid var(--border);
+    min-width: 0;
+    max-width: 160px;
+    overflow: hidden;
+}
+
+.hud-item > span,
+.hud-item #topXp,
+.hud-item #topGold {
+    max-width: 88px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+}
+
+.hud-item #topName {
+    max-width: 88px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: bottom;
+}
+
+.hud-item i {
+    flex-shrink: 0;
 }
 
 .hud-item small {
     font-size: 0.68rem;
     color: var(--text-3);
     font-weight: 700;
+    flex-shrink: 0;
 }
 
 .hud-xp { color: var(--gold); }
@@ -505,6 +571,7 @@ ul {
     gap: 22px;
 }
 
+/* البطاقة الأساسية (ذهبية - افتراضي) */
 .map-kingdom {
     position: relative;
     padding: 26px;
@@ -535,6 +602,72 @@ ul {
 
 .map-kingdom:hover::before {
     opacity: 1;
+}
+
+/* ألوان هادئة لكل مهارة */
+.map-kingdom[data-skill="imlaa"] {
+    background: linear-gradient(135deg, rgba(166, 124, 0, 0.10), rgba(125, 92, 0, 0.03));
+    border-color: rgba(166, 124, 0, 0.24);
+}
+.map-kingdom[data-skill="imlaa"] .kingdom-icon {
+    background: rgba(166, 124, 0, 0.14);
+    color: #a67c00;
+}
+.map-kingdom[data-skill="imlaa"] .kingdom-name { color: #7d5c00; }
+.map-kingdom[data-skill="imlaa"] .progress-fill {
+    background: linear-gradient(90deg, #b8860b, #a67c00);
+}
+
+.map-kingdom[data-skill="numbers"] {
+    background: linear-gradient(135deg, rgba(74, 124, 89, 0.10), rgba(58, 100, 72, 0.03));
+    border-color: rgba(74, 124, 89, 0.24);
+}
+.map-kingdom[data-skill="numbers"] .kingdom-icon {
+    background: rgba(74, 124, 89, 0.14);
+    color: #4a7c59;
+}
+.map-kingdom[data-skill="numbers"] .kingdom-name { color: #3a6448; }
+.map-kingdom[data-skill="numbers"] .progress-fill {
+    background: linear-gradient(90deg, #5b9470, #4a7c59);
+}
+
+.map-kingdom[data-skill="akhtaa"] {
+    background: linear-gradient(135deg, rgba(184, 84, 80, 0.10), rgba(154, 69, 64, 0.03));
+    border-color: rgba(184, 84, 80, 0.24);
+}
+.map-kingdom[data-skill="akhtaa"] .kingdom-icon {
+    background: rgba(184, 84, 80, 0.14);
+    color: #b85450;
+}
+.map-kingdom[data-skill="akhtaa"] .kingdom-name { color: #9a4540; }
+.map-kingdom[data-skill="akhtaa"] .progress-fill {
+    background: linear-gradient(90deg, #c1666b, #b85450);
+}
+
+.map-kingdom[data-skill="punctuation"] {
+    background: linear-gradient(135deg, rgba(107, 127, 163, 0.10), rgba(85, 103, 134, 0.03));
+    border-color: rgba(107, 127, 163, 0.24);
+}
+.map-kingdom[data-skill="punctuation"] .kingdom-icon {
+    background: rgba(107, 127, 163, 0.14);
+    color: #6b7fa3;
+}
+.map-kingdom[data-skill="punctuation"] .kingdom-name { color: #556787; }
+.map-kingdom[data-skill="punctuation"] .progress-fill {
+    background: linear-gradient(90deg, #8095b8, #6b7fa3);
+}
+
+.map-kingdom[data-skill="grammar"] {
+    background: linear-gradient(135deg, rgba(143, 108, 152, 0.10), rgba(120, 88, 129, 0.03));
+    border-color: rgba(143, 108, 152, 0.24);
+}
+.map-kingdom[data-skill="grammar"] .kingdom-icon {
+    background: rgba(143, 108, 152, 0.14);
+    color: #8f6c98;
+}
+.map-kingdom[data-skill="grammar"] .kingdom-name { color: #785881; }
+.map-kingdom[data-skill="grammar"] .progress-fill {
+    background: linear-gradient(90deg, #a485ad, #8f6c98);
 }
 
 .map-kingdom.locked {
@@ -1124,10 +1257,16 @@ ul {
 
 /* ---------- استجابة ---------- */
 @media (max-width: 640px) {
-    .brand-title { font-size: 0.95rem; }
+    .brand-title { font-size: 0.9rem; }
     .brand-sub { display: none; }
-    .hud { gap: 8px; font-size: 0.82rem; }
-    .hud-item { padding: 5px 9px; gap: 4px; }
+    .brand-icon { width: 36px; height: 36px; font-size: 1rem; }
+    .header-home-btn { width: 30px; height: 30px; font-size: 0.75rem; }
+    .hud { gap: 6px; font-size: 0.8rem; }
+    .hud-item { padding: 5px 8px; gap: 4px; max-width: 120px; }
+    .hud-item > span,
+    .hud-item #topXp,
+    .hud-item #topGold,
+    .hud-item #topName { max-width: 60px; }
     .hud-name span { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
 
     .question-card { padding: 20px; }
@@ -1179,4 +1318,4 @@ ul {
 
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(44, 62, 80, 0.25);
-       }
+   }
