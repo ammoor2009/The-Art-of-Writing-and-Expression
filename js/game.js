@@ -8,24 +8,38 @@
 const SECTIONS = [
     {
         id: 'imlaa',
-        name: 'مملكة الإملاء',
+        name: 'مهارة الإملاء',
         icon: 'fa-solid fa-pen-to-square',
         description: 'الهمزات، التاء، علامات الترقيم',
         file: 'questions/spelling.json'
     },
     {
         id: 'numbers',
-        name: 'مملكة الأعداد',
+        name: 'مهارة كتابة الأعداد',
         icon: 'fa-solid fa-hashtag',
         description: 'الأعداد والمعدود وقواعدها',
         file: 'questions/numbers.json'
     },
     {
         id: 'akhtaa',
-        name: 'مملكة الأخطاء الشائعة',
+        name: 'مهارة اكتشاف الأخطاء الشائعة',
         icon: 'fa-solid fa-triangle-exclamation',
         description: 'تصحيح الأخطاء اللغوية',
         file: 'questions/common-errors.json'
+    },
+    {
+        id: 'punctuation',
+        name: 'مهارة الترقيم',
+        icon: 'fa-solid fa-quote-right',
+        description: 'علامات الترقيم ومواضعها الصحيحة',
+        file: 'questions/punctuation.json'
+    },
+    {
+        id: 'grammar',
+        name: 'مهارة النحو اليسير',
+        icon: 'fa-solid fa-language',
+        description: 'قواعد النحو الأساسية بأسلوب ميسّر',
+        file: 'questions/grammar.json'
     }
 ];
 
@@ -36,7 +50,7 @@ const TIMER_DURATION = 30;
 const HINT_COST = 10;
 const XP_PER_CORRECT = 20;
 const GOLD_PER_CORRECT = 5;
-const STORAGE_KEY = 'fursan_linguistic_state';
+const STORAGE_KEY = 'writing_skills_state';
 
 /* ==================== البيانات المحمّلة ==================== */
 let KINGDOMS = [];
@@ -137,8 +151,8 @@ const ACHIEVEMENTS = [
     },
     {
         id: 'complete_section',
-        name: 'فارس الممالك',
-        desc: 'أكمل جميع مراحل مملكة كاملة',
+        name: 'بطل المهارات',
+        desc: 'أكمل جميع مراحل مهارة كاملة',
         icon: 'fa-solid fa-crown',
         check: () => KINGDOMS.some(k => (gameState.completedLevels[k.id]?.length || 0) >= k.levels)
     }
@@ -269,6 +283,35 @@ function handleStartGame() {
     renderKingdomGrid();
 }
 
+/* ==================== زر الهوم ==================== */
+function handleHomeClick() {
+    const activeScreen = document.querySelector('.screen.active');
+    const screenId = activeScreen ? activeScreen.id : '';
+
+    // إذا كان المستخدم في شاشة البداية بالفعل، لا نفعل شيئًا
+    if (screenId === 'screenStart') return;
+
+    // إذا كان في مرحلة أو اختبار قيد التنفيذ، نطلب تأكيدًا
+    const isInLevel = screenId === 'screenLevel';
+    const isInExam = screenId === 'screenExam';
+
+    if (isInLevel || isInExam) {
+        const ok = confirm('هل تريد العودة إلى صفحة البداية؟ ستفقد تقدم هذه الجلسة.');
+        if (!ok) return;
+
+        // إيقاف المؤقتات قبل الخروج
+        clearInterval(levelTimerInterval);
+        clearInterval(examTimerInterval);
+    }
+
+    // العودة إلى شاشة البداية مع إبقاء اسم اللاعب في الحقل
+    showScreen('screenStart');
+    const nameInput = $('playerNameInput');
+    if (nameInput) {
+        nameInput.value = gameState.playerName || '';
+    }
+}
+
 /* ==================== النافذة المنبثقة ==================== */
 function setupInfoModal() {
     $('infoBtn').addEventListener('click', () => {
@@ -303,7 +346,7 @@ function renderKingdomGrid() {
     grid.innerHTML = '';
 
     if (!KINGDOMS.length) {
-        grid.innerHTML = '<p style="text-align:center;color:var(--text-3)">لا توجد ممالك متاحة حاليًا.</p>';
+        grid.innerHTML = '<p style="text-align:center;color:var(--text-3)">لا توجد مهارات متاحة حاليًا.</p>';
         return;
     }
 
@@ -315,6 +358,7 @@ function renderKingdomGrid() {
 
         const card = document.createElement('div');
         card.className = 'map-kingdom';
+        card.setAttribute('data-skill', kingdom.id);
         card.innerHTML = `
             <div class="kingdom-watermark"><i class="${kingdom.icon}"></i></div>
             <div class="kingdom-body">
@@ -346,7 +390,7 @@ function openKingdom(kingdomId) {
         nextLevel = i + 1;
     }
     if (nextLevel > kingdom.levels) {
-        alert('أكملت جميع المراحل في هذه المملكة!');
+        alert('أكملت جميع المراحل في هذه المهارة!');
         return;
     }
     startLevel(kingdom.id, nextLevel);
@@ -364,7 +408,7 @@ function startLevel(kingdomId, levelNumber) {
 
     let levelQuestions = QUESTION_BANK.filter(q => q.kingdom === kingdomId && q.level === levelNumber);
 
-    // إن لم تكفِ الأسئلة، نستكمل من بقية أسئلة المملكة
+    // إن لم تكفِ الأسئلة، نستكمل من بقية أسئلة المهارة
     if (levelQuestions.length < QUESTIONS_PER_LEVEL) {
         const additional = QUESTION_BANK.filter(q => q.kingdom === kingdomId && q.level !== levelNumber);
         const needed = QUESTIONS_PER_LEVEL - levelQuestions.length;
@@ -771,6 +815,8 @@ async function init() {
     $('playerNameInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleStartGame();
     });
+
+    $('homeBtn').addEventListener('click', handleHomeClick);
 
     setupInfoModal();
     setupPopstate();
