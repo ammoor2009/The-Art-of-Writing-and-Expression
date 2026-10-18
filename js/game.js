@@ -2,9 +2,6 @@
    فن الكتابة والتعبير — منطق اللعبة
    ========================================================= */
 
-/* ==================== إعدادات الأقسام ====================
-   لإضافة قسم جديد لاحقًا: أضف عنصرًا هنا مع ملف JSON الخاص به.
-   ========================================================= */
 const SECTIONS = [
     {
         id: 'imlaa',
@@ -44,7 +41,7 @@ const SECTIONS = [
 ];
 
 /* ==================== ثوابت اللعبة ==================== */
-const QUESTIONS_PER_LEVEL = 5;
+const QUESTIONS_PER_LEVEL = 10;
 const EXAM_MAX_QUESTIONS = 20;
 const TIMER_DURATION = 30;
 const HINT_COST = 10;
@@ -116,7 +113,8 @@ let gameState = {
     gold: 100,
     completedLevels: {},
     achievements: [],
-    examHistory: []
+    examHistory: [],
+    levelInProgress: null
 };
 
 /* ==================== الإنجازات ==================== */
@@ -239,9 +237,11 @@ async function loadSectionData() {
             let maxLevel = 1;
             questions.forEach((q, idx) => {
                 const item = {
+                    id: q.id != null ? q.id : `${section.id}_${idx}`,
                     kingdom: section.id,
                     level: q.level || Math.floor(idx / QUESTIONS_PER_LEVEL) + 1,
                     type: q.type || 'mcq',
+                    difficulty: q.difficulty || 'متوسط',
                     text: q.text,
                     options: q.options || [],
                     answer: q.answer,
@@ -256,7 +256,8 @@ async function loadSectionData() {
                 name: section.name,
                 icon: section.icon,
                 description: section.description,
-                levels: maxLevel
+                levels: maxLevel,
+                questionCount: questions.length
             });
         } catch (err) {
             console.error(`خطأ في تحميل القسم ${section.id}:`, err);
@@ -288,23 +289,21 @@ function handleHomeClick() {
     const activeScreen = document.querySelector('.screen.active');
     const screenId = activeScreen ? activeScreen.id : '';
 
-    // إذا كان المستخدم في شاشة البداية بالفعل، لا نفعل شيئًا
     if (screenId === 'screenStart') return;
 
-    // إذا كان في مرحلة أو اختبار قيد التنفيذ، نطلب تأكيدًا
     const isInLevel = screenId === 'screenLevel';
     const isInExam = screenId === 'screenExam';
 
     if (isInLevel || isInExam) {
-        const ok = confirm('هل تريد العودة إلى صفحة البداية؟ ستفقد تقدم هذه الجلسة.');
+        const ok = confirm('هل تريد العودة إلى صفحة البداية؟ يمكنك متابعة تقدمك لاحقًا.');
         if (!ok) return;
 
-        // إيقاف المؤقتات قبل الخروج
         clearInterval(levelTimerInterval);
         clearInterval(examTimerInterval);
+
+        if (isInLevel) saveLevelProgress();
     }
 
-    // العودة إلى شاشة البداية مع إبقاء اسم اللاعب في الحقل
     showScreen('screenStart');
     const nameInput = $('playerNameInput');
     if (nameInput) {
@@ -383,6 +382,11 @@ function openKingdom(kingdomId) {
     const kingdom = KINGDOMS.find(k => k.id === kingdomId);
     if (!kingdom) return;
 
+    if (gameState.levelInProgress && gameState.levelInProgress.kingdomId === kingdomId) {
+        startLevel(kingdomId, gameState.levelInProgress.levelNumber);
+        return;
+    }
+
     const completed = gameState.completedLevels[kingdom.id] || [];
     let nextLevel = 1;
     for (let i = 1; i <= kingdom.levels; i++) {
@@ -402,42 +406,96 @@ let levelTimerInterval = null;
 let levelTimeLeft = 0;
 let answerLocked = false;
 
+function saveLevelProgress() {
+    if (!currentLevelInfo) {
+        gameState.levelInProgress = null;
+    } else {
+        gameState.levelInProgress = {
+            kingdomId: currentLevelInfo.kingdomId,
+            levelNumber: currentLevelInfo.levelNumber,
+            questionPool: currentLevelInfo.questionPool.slice(),
+            currentRoundIds: currentLevelInfo.currentRound.map(q => q.id),
+            roundIndex: currentLevelInfo.roundIndex,
+            masteredIds: currentLevelInfo.masteredIds.slice(),
+            attemptedIds: currentLevelInfo.attemptedIds.slice(),
+            correctFirstTry: currentLevelInfo.correctFirstTry,
+            hintsUsed: currentLevelInfo.hintsUsed,
+            xpEarned: currentLevelInfo.xpEarned,
+            goldEarned: currentLevelInfo.goldEarned
+        };
+    }
+    saveState();
+}
+
 function startLevel(kingdomId, levelNumber) {
     const kingdom = KINGDOMS.find(k => k.id === kingdomId);
     if (!kingdom) return;
 
-    let levelQuestions = QUESTION_BANK.filter(q => q.kingdom === kingdomId && q.level === levelNumber);
+    const saved = gameState.levelInProgress;
 
-    // إن لم تكفِ الأسئلة، نستكمل من بقية أسئلة المهارة
-    if (levelQuestions.length < QUESTIONS_PER_LEVEL) {
-        const additional = QUESTION_BANK.filter(q => q.kingdom === kingdomId && q.level !== levelNumber);
-        const needed = QUESTIONS_PER_LEVEL - levelQuestions.length;
-        const extra = shuffleArray(additional.slice()).slice(0, needed);
-        levelQuestions = levelQuestions.concat(extra);
-    }
+    if (saved && saved.kingdomId === kingdomId && saved.levelNumber === levelNumber) {
+        currentLevelInfo = {
+            kingdomId: saved.kingdomId,
+            levelNumber: saved.levelNumber,
+            questionPool: saved.questionPool.slice(),
+            currentRound: saved.currentRoundIds.map(id =>
+                QUESTION_BANK.find(q => q.id === id && q.kingdom === kingdomId)
+            ).filter(Boolean),
+            roundIndex: saved.roundIndex,
+            masteredIds: saved.masteredIds.slice(),
+            attemptedIds: saved.attemptedIds.slice(),
+            correctFirstTry: saved.correctFirstTry,
+            hintsUsed: saved.hintsUsed,
+            xpEarned: saved.xpEarned,
+            goldEarned: saved.goldEarned
+        };
 
-    const selectedQuestions = shuffleArray(levelQuestions.slice()).slice(0, QUESTIONS_PER_LEVEL);
-
-    if (!selectedQuestions.length) {
-        alert('لا توجد أسئلة متاحة لهذه المرحلة.');
+        showScreen('screenLevel');
+        $('levelTitle').textContent = `${kingdom.name} - المرحلة ${levelNumber}`;
+        $('levelSubtitle').textContent = kingdom.description;
+        answerLocked = false;
+        $('nextBtn').classList.add('hidden');
+        $('finishLevelBtn').classList.add('hidden');
+        $('endLevelBtn').classList.add('hidden');
+        $('feedbackBox').classList.add('hidden');
+        renderQuestion();
         return;
     }
+
+    gameState.levelInProgress = null;
+
+    const levelQuestions = QUESTION_BANK.filter(q => q.kingdom === kingdomId && q.level === levelNumber);
+
+    if (levelQuestions.length < QUESTIONS_PER_LEVEL) {
+        alert(`هذا المستوى قيد الإعداد. الأسئلة المتوفرة حاليًا: ${levelQuestions.length} من ${QUESTIONS_PER_LEVEL}.`);
+        return;
+    }
+
+    const selectedQuestions = levelQuestions.length === QUESTIONS_PER_LEVEL
+        ? levelQuestions.slice()
+        : shuffleArray(levelQuestions.slice()).slice(0, QUESTIONS_PER_LEVEL);
+
+    const shuffled = shuffleArray(selectedQuestions.slice());
 
     currentLevelInfo = {
         kingdomId,
         levelNumber,
-        questions: selectedQuestions,
-        currentIndex: 0,
-        correct: 0,
+        questionPool: selectedQuestions.map(q => q.id),
+        currentRound: shuffled,
+        roundIndex: 0,
+        masteredIds: [],
+        attemptedIds: [],
+        correctFirstTry: 0,
         hintsUsed: 0,
-        goldEarned: 0,
-        xpEarned: 0
+        xpEarned: 0,
+        goldEarned: 0
     };
+
+    saveLevelProgress();
 
     showScreen('screenLevel');
     $('levelTitle').textContent = `${kingdom.name} - المرحلة ${levelNumber}`;
     $('levelSubtitle').textContent = kingdom.description;
-    $('totalQuestionsNum').textContent = selectedQuestions.length;
     answerLocked = false;
 
     $('nextBtn').classList.add('hidden');
@@ -452,10 +510,17 @@ function startLevel(kingdomId, levelNumber) {
 function renderQuestion() {
     if (!currentLevelInfo) return;
     const info = currentLevelInfo;
-    const q = info.questions[info.currentIndex];
+    const q = info.currentRound[info.roundIndex];
+    if (!q) return;
 
-    $('currentQuestionNum').textContent = info.currentIndex + 1;
-    $('levelProgress').style.width = `${(info.currentIndex / info.questions.length) * 100}%`;
+    $('currentQuestionNum').textContent = info.roundIndex + 1;
+    $('totalQuestionsNum').textContent = info.currentRound.length;
+
+    const progressPercent = info.questionPool.length > 0
+        ? (info.masteredIds.length / info.questionPool.length) * 100
+        : 0;
+    $('levelProgress').style.width = `${progressPercent}%`;
+
     $('questionText').textContent = q.text;
     $('timerSeconds').textContent = TIMER_DURATION;
 
@@ -529,7 +594,7 @@ function selectAnswer(selectedIndex) {
     clearInterval(levelTimerInterval);
 
     const info = currentLevelInfo;
-    const q = info.questions[info.currentIndex];
+    const q = info.currentRound[info.roundIndex];
     const isCorrect = selectedIndex === q.answer;
 
     const optionButtons = document.querySelectorAll('.option-btn');
@@ -539,11 +604,18 @@ function selectAnswer(selectedIndex) {
         if (idx === selectedIndex && !isCorrect) btn.classList.add('is-wrong');
     });
 
+    const isFirstAttempt = !info.attemptedIds.includes(q.id);
+    if (isFirstAttempt) info.attemptedIds.push(q.id);
+
     const feedbackBox = $('feedbackBox');
     feedbackBox.classList.remove('hidden');
 
     if (isCorrect) {
-        info.correct++;
+        if (!info.masteredIds.includes(q.id)) {
+            info.masteredIds.push(q.id);
+        }
+        if (isFirstAttempt) info.correctFirstTry++;
+
         feedbackBox.className = 'feedback correct';
         feedbackBox.innerHTML = `<i class="fa-solid fa-check-circle"></i> إجابة صحيحة! ${escapeHtml(q.explanation || '')}`;
         info.xpEarned += XP_PER_CORRECT;
@@ -557,17 +629,53 @@ function selectAnswer(selectedIndex) {
     }
 
     updateTopBar();
+    saveLevelProgress();
 
-    if (info.currentIndex < info.questions.length - 1) {
-        $('nextBtn').classList.remove('hidden');
-        $('finishLevelBtn').classList.add('hidden');
-        $('endLevelBtn').classList.remove('hidden');
-        $('nextBtn').textContent = 'السؤال التالي';
-    } else {
+    const isLastInRound = info.roundIndex >= info.currentRound.length - 1;
+    const allMastered = info.masteredIds.length >= info.questionPool.length;
+
+    if (allMastered && isLastInRound) {
         $('finishLevelBtn').classList.remove('hidden');
         $('nextBtn').classList.add('hidden');
         $('endLevelBtn').classList.add('hidden');
         $('finishLevelBtn').textContent = 'إنهاء المرحلة';
+    } else if (isLastInRound) {
+        $('nextBtn').classList.remove('hidden');
+        $('nextBtn').textContent = 'إعادة الأسئلة التي لم تُتقن';
+        $('finishLevelBtn').classList.add('hidden');
+        $('endLevelBtn').classList.remove('hidden');
+    } else {
+        $('nextBtn').classList.remove('hidden');
+        $('nextBtn').textContent = 'السؤال التالي';
+        $('finishLevelBtn').classList.add('hidden');
+        $('endLevelBtn').classList.remove('hidden');
+    }
+}
+
+/* ==================== زر السؤال التالي ==================== */
+function handleNextClick() {
+    if (!currentLevelInfo) return;
+    const info = currentLevelInfo;
+
+    const isLastInRound = info.roundIndex >= info.currentRound.length - 1;
+
+    if (isLastInRound) {
+        const unmasteredIds = info.questionPool.filter(id => !info.masteredIds.includes(id));
+
+        if (unmasteredIds.length === 0) return;
+
+        const unmasteredQuestions = unmasteredIds.map(id =>
+            QUESTION_BANK.find(q => q.id === id && q.kingdom === info.kingdomId)
+        ).filter(Boolean);
+
+        info.currentRound = shuffleArray(unmasteredQuestions.slice());
+        info.roundIndex = 0;
+        saveLevelProgress();
+        renderQuestion();
+    } else {
+        info.roundIndex++;
+        saveLevelProgress();
+        renderQuestion();
     }
 }
 
@@ -583,7 +691,7 @@ function useHint() {
     updateTopBar();
 
     const info = currentLevelInfo;
-    const q = info.questions[info.currentIndex];
+    const q = info.currentRound[info.roundIndex];
     const wrongOptions = q.options.map((_, idx) => idx).filter(idx => idx !== q.answer);
     const toRemove = shuffleArray(wrongOptions.slice()).slice(0, Math.min(2, wrongOptions.length));
 
@@ -597,7 +705,7 @@ function useHint() {
     hintText.textContent = 'تم حذف إجابتين خاطئتين';
     hintText.classList.remove('hidden');
     $('hintBtn').classList.add('hidden');
-    saveState();
+    saveLevelProgress();
 }
 
 /* ==================== إنهاء المرحلة ==================== */
@@ -612,29 +720,37 @@ function finishLevel() {
     if (!gameState.completedLevels[info.kingdomId].includes(info.levelNumber)) {
         gameState.completedLevels[info.kingdomId].push(info.levelNumber);
     }
+
     gameState.xp += info.xpEarned;
     gameState.gold += info.goldEarned;
+    gameState.levelInProgress = null;
     saveState();
     updateTopBar();
 
-    $('completeCorrect').textContent = info.correct;
+    const total = info.questionPool.length;
+    const threshold1 = Math.ceil(total * 0.8);
+    const threshold2 = Math.ceil(total * 0.6);
+
+    $('completeCorrect').textContent = info.correctFirstTry;
     $('completeXp').textContent = info.xpEarned;
     $('completeGold').textContent = info.goldEarned;
     $('completeTitle').textContent =
-        info.correct >= 4 ? 'أداء رائع!' :
-        info.correct >= 3 ? 'جيد جدًا' : 'حاول مرة أخرى';
+        info.correctFirstTry >= threshold1 ? 'أداء رائع!' :
+        info.correctFirstTry >= threshold2 ? 'جيد جدًا' : 'حاول مرة أخرى';
     $('completeIcon').textContent =
-        info.correct >= 4 ? '🏆' :
-        info.correct >= 3 ? '🌟' : '💪';
+        info.correctFirstTry >= threshold1 ? '🏆' :
+        info.correctFirstTry >= threshold2 ? '🌟' : '💪';
     $('completeMessage').textContent =
-        `أجبت على ${info.correct} من أصل ${info.questions.length} أسئلة صحيحة.`;
+        `أتقنت جميع أسئلة المستوى. أجبت من أول محاولة على ${info.correctFirstTry} من أصل ${total} أسئلة.`;
 
     soundFinish();
+    currentLevelInfo = null;
     showScreen('screenLevelComplete');
 }
 
 function goBackToMap() {
     clearInterval(levelTimerInterval);
+    saveLevelProgress();
     showScreen('screenMap');
     renderKingdomGrid();
     updateTopBar();
@@ -841,16 +957,12 @@ async function init() {
     $('examBackBtn').addEventListener('click', goBackToMap);
     $('examResultBackBtn').addEventListener('click', goBackToMap);
 
-    $('nextBtn').addEventListener('click', () => {
-        if (!currentLevelInfo) return;
-        currentLevelInfo.currentIndex++;
-        renderQuestion();
-    });
+    $('nextBtn').addEventListener('click', handleNextClick);
 
     $('finishLevelBtn').addEventListener('click', finishLevel);
 
     $('endLevelBtn').addEventListener('click', () => {
-        if (confirm('هل تريد إنهاء اللعب والعودة إلى الخريطة؟')) {
+        if (confirm('هل تريد إنهاء اللعب والعودة إلى الخريطة؟ يمكنك متابعة تقدمك لاحقًا.')) {
             clearInterval(levelTimerInterval);
             goBackToMap();
         }
